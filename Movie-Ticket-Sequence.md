@@ -2,22 +2,22 @@
 
 ## ① 参加オブジェクト（ライフライン）の洗い出し
 
-Actor（利用者・外部システム）
+**Actor（利用者・外部システム）**
 ・User … 映画を選び、チケット購入を行う実在の顧客
 ・PaymentGateway … クレジットカード決済を実行する外部決済プロバイダ
 
-Boundary（UI や API エンドポイントなど、Actor とシステムの境界面）
+**Boundary（UI や API エンドポイントなど、Actor とシステムの境界面）**
 ・CinemaWebApp‐UI … ブラウザで動く画面一式（映画一覧、ログイン画面、購入ページ、完了ページ）
 ・LoginForm … メール／パスワード入力を受け取る UI 部品
 ・PurchasePage … 上映日時・座席・支払い情報を入力させる UI 部品
 
-Control（ワークフローやビジネスロジックを調整する調停役）
+**Control（ワークフローやビジネスロジックを調整する調停役）**
 ・CinemaWebApp‐Server … UI からのリクエストを受け取り、各 Service を呼び出す調整役
 ・UserService … 認証とユーザー情報取得を担当
 ・TicketService … 座席在庫確認・チケット発行・DB 永続化を統括
 ・EmailService … メール送信キュー投入や SMTP 呼び出しを行う
 
-Entity（永続化される業務データ、ドメインモデル）
+**Entity（永続化される業務データ、ドメインモデル）**
 ・UserAccount … email, hashedPassword, etc.
 ・Movie … タイトル・上映時間など
 ・Showtime … 上映日時／スクリーン／座席構成
@@ -26,13 +26,13 @@ Entity（永続化される業務データ、ドメインモデル）
 ・PaymentTransaction … 金額、ステータス、決済 ID
 ・EmailMessage … 宛先、件名、本文、送信状態
 
-DataStore（補助的に言及しておくと分かりやすいオブジェクト）
+**DataStore（補助的に言及しておくと分かりやすいオブジェクト）**
 ・DB … 各 Entity を保存するリレーショナル／NoSQL DB
 
 ## ② シーケンス図に含めるメッセージ一覧の作成
 
 ────────────────────────────────
-A. 映画一覧～作品選択
+**A. 映画一覧～作品選択**
 ────────────────────────────────
 User → CinemaWebApp-UI : openMovieListPage()
 CinemaWebApp-UI → CinemaWebApp-Server : GET /movies
@@ -44,7 +44,7 @@ CinemaWebApp-Server → CinemaWebApp-UI : renderMovieList(movieList)
 
 
 ────────────────────────────────
-B. ログイン判定 & 認証（未ログイン時のみ）
+**B. ログイン判定 & 認証（未ログイン時のみ）**
 ────────────────────────────────
 7. CinemaWebApp-UI → CinemaWebApp-Server : checkAuth(sessionCookie)
 8. CinemaWebApp-Server → UserService : isLoggedIn(sessionCookie)
@@ -62,7 +62,7 @@ B. ログイン判定 & 認証（未ログイン時のみ）
 
 
 ────────────────────────────────
-C. 購入入力～決済リクエスト
+**C. 購入入力～決済リクエスト**
 ────────────────────────────────
 18. CinemaWebApp-UI → User : showPurchaseForm(movie,showtime,seatMap)
 19. User → CinemaWebApp-UI : submitPurchase(seatIdList, cardInfo)
@@ -70,7 +70,7 @@ C. 購入入力～決済リクエスト
 
 
 ────────────────────────────────
-D. 決済処理
+**D. 決済処理**
 ────────────────────────────────
 21. CinemaWebApp-Server → PaymentGateway : charge(amount,cardInfo,orderId)
 22. PaymentGateway → CinemaWebApp-Server : paymentResult(success|fail)
@@ -78,7 +78,7 @@ D. 決済処理
 
 
 ────────────────────
-E. チケット発行 & メール送信
+**E. チケット発行 & メール送信**
 ────────────────────
 23. CinemaWebApp-Server → TicketService : issueTicket(userId,showtimeId,seatIdList)
 24. TicketService → DB : lockSeats(seatIdList)
@@ -99,7 +99,7 @@ E. チケット発行 & メール送信
 36. CinemaWebApp-UI → User : showError(errorMsg)
 ＜end alt＞
 ────────────────────────────────
-E. ログアウト or 追加操作（省略する場合はライフラインだけ置く）
+**E. ログアウト or 追加操作（省略する場合はライフラインだけ置く）**
 ────────────────────────────────
 37. User → CinemaWebApp-UI : clickLogout()
 38. CinemaWebApp-UI → CinemaWebApp-Server : POST /logout
@@ -174,5 +174,74 @@ sequenceDiagram
         PaymentGateway -->> Server   : paymentResult(fail)
         Server        -->> UI        : paymentFailed(errorMsg)
         UI            ->> User       : showError(errorMsg)
+    end
+```
+
+## 日本語
+
+```mermaid
+sequenceDiagram
+    %% === ライフライン ===
+    participant 顧客        as User
+    participant 画面UI      as CinemaWebApp-UI
+    participant サーバ       as CinemaWebApp-Server
+    participant 認証SVC      as UserService
+    participant 決済GW       as PaymentGateway
+    participant チケットSVC  as TicketService
+    participant メールSVC    as EmailService
+    participant DB
+    participant SMTP外部     as SMTP/External
+
+    %% === 映画一覧取得 ===
+    顧客       ->> 画面UI     : 映画一覧ページを開く
+    画面UI     ->> サーバ      : 映画一覧取得リクエスト
+    サーバ      ->> DB        : 映画＋上映スケジュール検索
+    DB         -->> サーバ     : 映画一覧
+    サーバ     -->> 画面UI     : 映画一覧を描画
+
+    %% === 作品・上映日時選択 ===
+    顧客       ->> 画面UI     : 映画・上映日時を選択
+
+    %% === 認証チェック ===
+    画面UI     ->> サーバ      : 認証状態確認
+    サーバ      ->> 認証SVC     : セッション確認
+    認証SVC    -->> サーバ     : 未ログイン
+    サーバ     -->> 画面UI     : ログイン画面を表示
+
+    顧客       ->> 画面UI     : ログインフォーム送信(メール,パス)
+    画面UI     ->> サーバ      : ログインAPI呼出
+    サーバ      ->> 認証SVC     : 認証要求
+    認証SVC     ->> DB        : ユーザ検索
+    DB         -->> 認証SVC    : ユーザ情報
+    認証SVC    -->> サーバ     : 認証成功(ユーザID)
+    サーバ     -->> 画面UI     : ログイン成功
+
+    %% === 購入フォーム入力 ===
+    画面UI     ->> 顧客       : 購入フォームを表示
+    顧客       ->> 画面UI     : 購入フォーム送信(座席,カード情報)
+    画面UI     ->> サーバ      : 購入API送信
+
+    %% === 決済リクエスト ===
+    サーバ      ->> 決済GW      : 決済実行(金額,カード情報,注文ID)
+
+    %% === 決済結果の分岐 ===
+    alt 決済成功
+        決済GW     -->> サーバ      : 決済成功
+        サーバ      ->> チケットSVC  : チケット発行要求(ユーザ,上映,座席)
+        チケットSVC ->> DB          : 座席ロック
+        DB         -->> チケットSVC : ロックOK
+        チケットSVC ->> DB          : チケット保存
+        DB         -->> チケットSVC : チケットID
+        チケットSVC ->> メールSVC    : 購入完了メール送信
+        メールSVC   ->> SMTP外部     : メール送信
+        SMTP外部   -->> メールSVC    : 送信OK
+        メールSVC  -->> チケットSVC : メール送信完了
+        チケットSVC -->> サーバ      : チケット情報
+        サーバ     -->> 画面UI       : 購入完了応答
+        画面UI     ->> 顧客         : 購入完了ページ表示
+    else 決済失敗
+        決済GW     -->> サーバ    : 決済失敗
+        サーバ     -->> 画面UI     : エラーメッセージ表示
+        画面UI     ->> 顧客       : エラー内容を表示
     end
 ```
