@@ -40,6 +40,8 @@ CinemaWebApp-Server → DB : selectMoviesAndShowtimes()
 DB → CinemaWebApp-Server : movieList
 CinemaWebApp-Server → CinemaWebApp-UI : renderMovieList(movieList)
 （画面上でユーザーが作品と上映日時をクリック）6. User → CinemaWebApp-UI : selectMovie(showtimeId)
+
+
 ────────────────────────────────
 B. ログイン判定 & 認証（未ログイン時のみ）
 ────────────────────────────────
@@ -55,18 +57,24 @@ B. ログイン判定 & 認証（未ログイン時のみ）
 15. DB → UserService : userRecord
 16. UserService → CinemaWebApp-Server : authOK(userId | fail)
 17. CinemaWebApp-Server → CinemaWebApp-UI : loginResult(success)＜end alt＞
+
+
 ────────────────────────────────
 C. 購入入力～決済リクエスト
 ────────────────────────────────
 18. CinemaWebApp-UI → User : showPurchaseForm(movie,showtime,seatMap)
 19. User → CinemaWebApp-UI : submitPurchase(seatIdList, cardInfo)
 20. CinemaWebApp-UI → CinemaWebApp-Server : POST /purchase(userId,showtimeId,seatIdList,amount,cardInfo)
+
+
 ────────────────────────────────
 D. 決済処理
 ────────────────────────────────
 21. CinemaWebApp-Server → PaymentGateway : charge(amount,cardInfo,orderId)
 22. PaymentGateway → CinemaWebApp-Server : paymentResult(success|fail)
 ＜alt 決済成功＞
+
+
 ────────────────────
 E. チケット発行 & メール送信
 ────────────────────
