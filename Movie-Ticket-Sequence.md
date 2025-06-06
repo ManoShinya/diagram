@@ -39,7 +39,8 @@ CinemaWebApp-UI → CinemaWebApp-Server : GET /movies
 CinemaWebApp-Server → DB : selectMoviesAndShowtimes()
 DB → CinemaWebApp-Server : movieList
 CinemaWebApp-Server → CinemaWebApp-UI : renderMovieList(movieList)
-（画面上でユーザーが作品と上映日時をクリック）6. User → CinemaWebApp-UI : selectMovie(showtimeId)
+（画面上でユーザーが作品と上映日時をクリック）
+6. User → CinemaWebApp-UI : selectMovie(showtimeId)
 
 
 ────────────────────────────────
@@ -56,7 +57,8 @@ B. ログイン判定 & 認証（未ログイン時のみ）
 14. UserService → DB : getUserByEmail(email)
 15. DB → UserService : userRecord
 16. UserService → CinemaWebApp-Server : authOK(userId | fail)
-17. CinemaWebApp-Server → CinemaWebApp-UI : loginResult(success)＜end alt＞
+17. CinemaWebApp-Server → CinemaWebApp-UI : loginResult(success)
+＜end alt＞
 
 
 ────────────────────────────────
